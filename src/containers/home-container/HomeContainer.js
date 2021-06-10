@@ -13,6 +13,7 @@ export default class HomeContainer extends React.Component {
       isLoaded: false,
       movies: [],
       showMovieDetailsModal: false,
+      currentMovieDetails: {}
     };
   }
 
@@ -26,7 +27,7 @@ export default class HomeContainer extends React.Component {
         },
       });
       const response = await responsePromise.json();
-
+      console.log(response);
       this.setState({
         isLoaded: true,
         movies: response.results,
@@ -39,8 +40,30 @@ export default class HomeContainer extends React.Component {
     }
   }
 
-  handleOpenMovieModal = () => {
+  async getMovieDetails(movie) {
+    try {
+      const movieDetailsUrl = `${MOVIE_BASE_URL}/movie/${movie}`;
+      const responsePromise = await fetch(movieDetailsUrl, {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_API_KEY}`,
+          "Content-Type": "application/json;charset=utf-8",
+        },
+      });
+      const response = await responsePromise.json();
+      this.setState({
+        currentMovieDetails: response
+      })
+    } catch (e) {
+      this.setState({
+        error: e,
+        isLoaded: true,
+      });
+    }
+  }
+
+  handleOpenMovieModal = (movie) => {
     this.setState({ showMovieDetailsModal: true });
+    this.getMovieDetails(movie);
   };
 
   handleCloseMovieModal = () => {
@@ -63,6 +86,17 @@ export default class HomeContainer extends React.Component {
               onRequestClose={this.handleCloseMovieModal}
             >
               <button onClick={this.handleCloseMovieModal}>X</button>
+
+              {
+                this.state.currentMovieDetails
+                ?
+                  <>
+                <img src={`https://image.tmdb.org/t/p/original${this.state.currentMovieDetails.poster_path}`} alt="" />
+                  </>
+                :
+                  <>
+                  </>
+                }
             </ReactModal>
           </>
         )}
